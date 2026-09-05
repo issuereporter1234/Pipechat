@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+cleanUp(){
+	rm -r "$dir"
+}
+createConfig(){
+	local CONFIGWR
+	#change to associative arrays
+	local colors=("\e[31m0: read\e[0m" "\e[32m1: green\e[0m" "\e[33m2: brown\e[0m" "\e[34m3: blue\e[0m" "\e[35m4: purple\e[0m" "\e[36m5: cyan\e[0m" "\e[37m6: gray\e[0m")
+	echo Choose the color:
+	printf "%b\n" "${colors[@]}"
+	read COLORNUM
+
+	CONFIGWR=${colors[$COLORNUM]}
+
+	printf "%s" "$CONFIGWR" > settings.config
+
+}
+createConfig
+name=$(whoami)
+
+dir=/tmp/"$name"echo 
+if ! [ -d "$dir" ]; then
+	mkdir "$dir"
+fi
+pipe="$dir"/pipe
+if ! [ -f "$pipe" ]; then
+	mkfifo "$pipe"
+fi
+chgrp chat "$pipe"
+chmod 620 "$pipe"
+
+readMsg(){
+	while true; do
+		cat "$pipe"
+	done
+}
+
+trap cleanUp exit || trap cleanUp SIGINT
+readMsg &
+while true; do
+	sendPat='^\/(\w+)\ (.+)'
+	read -r input
+	if [[ "$input" =~ $sendPat ]]; then
+		user=${BASH_REMATCH[1]}
+		msg=${BASH_REMATCH[2]}
+		printf "%s: %s\n" "$name" "$msg" > /tmp/"$user"/pipe
+	fi
+
+done

@@ -1,25 +1,48 @@
 #!/usr/bin/env bash
+source ./settings
+declare -Ar colors=(
+	[red]='\e[31m'
+ 	[green]='\e[32m'
+ 	[brown]='\e[33m'
+ 	[blue]='\e[34m'
+ 	[purple]='\e[35m'
+ 	[cyan]='\e[36m'
+ 	[gray]='\e[37m'
+)
+readonly DEAFULT='\e[0m'
 
 cleanUp(){
 	rm -r "$dir"
 }
 createConfig(){
 	local CONFIGWR
-	#change to associative arrays
-	local colors=("\e[31m0: read\e[0m" "\e[32m1: green\e[0m" "\e[33m2: brown\e[0m" "\e[34m3: blue\e[0m" "\e[35m4: purple\e[0m" "\e[36m5: cyan\e[0m" "\e[37m6: gray\e[0m")
-	echo Choose the color:
-	printf "%b\n" "${colors[@]}"
-	read COLORNUM
 
-	CONFIGWR=${colors[$COLORNUM]}
+	printf "Choose a color: (Enter it's name.)\n"
+	printf  "1:${colors[red]} red $DEAFULT\n"
+	printf  "2:${colors[green]} green $DEAFULT\n"
+	printf  "3:${colors[brown]} brown $DEAFULT\n"
+	printf  "4:${colors[blue]} blue $DEAFULT\n"
+	printf  "5:${colors[purple]} purple $DEAFULT\n"
+	printf  "6:${colors[cyan]} cyan $DEAFULT\n"
+	printf  "7:${colors[gray]} gray $DEAFULT\n"
+	local chcolor
+	read chcolor
+	chcolor="${colors["$chcolor"]}"
+	
 
-	printf "%s" "$CONFIGWR" > settings.config
+	CONFIGWR="#!/usr/bin/env bash
+COLORSET='$chcolor'"
+
+	printf "%s\n" "$CONFIGWR" > settings
+	COLORSET="$chcolor"
 
 }
-createConfig
+if ! [ -f settings ];then
+	createConfig
+fi
 name=$(whoami)
 
-dir=/tmp/"$name"echo 
+dir=/tmp/"$name" 
 if ! [ -d "$dir" ]; then
 	mkdir "$dir"
 fi
@@ -44,7 +67,7 @@ while true; do
 	if [[ "$input" =~ $sendPat ]]; then
 		user=${BASH_REMATCH[1]}
 		msg=${BASH_REMATCH[2]}
-		printf "%s: %s\n" "$name" "$msg" > /tmp/"$user"/pipe
+		printf "%b%b%b: %s\n" "$COLORSET" "$name" "$DEAFULT" "$msg" > /tmp/"$user"/pipe
 	fi
 
 done

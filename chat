@@ -83,7 +83,9 @@ while true; do
 		user=${BASH_REMATCH[1]}
 		msg=${BASH_REMATCH[2]}
 		printf "%b%b%b: %s\n" "$COLORSET" "$name" "$DEAFULT" "$msg" > /tmp/"$user"/pipe
-		printf "%b%b%b: %s\n" "$COLORSET" "$name" "$DEAFULT" "$msg" > .log
+		printf "%b%b%b: %s\n" "$COLORSET" "$name" "$DEAFULT" "$msg" >>  .log
+	else
+		printf "%b" "Not a valid input\a\n"
 	fi
 
 done

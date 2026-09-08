@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-source ./settings
+if [ -f settings ]; then
+	source ./settings
+fi
+trap cleanUp exit || trap cleanUp SIGINT
+
 declare -Ar colors=(
 	[red]='\e[31m'
  	[green]='\e[32m'
@@ -54,20 +58,32 @@ chgrp chat "$pipe"
 chmod 620 "$pipe"
 
 readMsg(){
-	while true; do
-		cat "$pipe"
+	while true; do	
+		mapfile printChat < "$pipe"
+		printf "%b" "${printChat[@]}" >> .log
+		printf "%b" "${printChat[@]}\a"
+		
 	done
 }
 
-trap cleanUp exit || trap cleanUp SIGINT
+
 readMsg &
 while true; do
 	sendPat='^\/(\w+)\ (.+)'
+	logPat='^(/log)$'
+	logAll='^(/logAll)$'
 	read -r input
-	if [[ "$input" =~ $sendPat ]]; then
+	if [[ "$input" =~ $logPat ]]; then
+		mapfile -n 10 logLast10 < .log
+		printf "%s" "${logLast10[@]}"
+	elif [[ "$input" =~ $logAll ]]; then
+		mapfile logAll < .log
+		printf "%s" "${logAll[@]}"
+	elif [[ "$input" =~ $sendPat ]]; then
 		user=${BASH_REMATCH[1]}
 		msg=${BASH_REMATCH[2]}
 		printf "%b%b%b: %s\n" "$COLORSET" "$name" "$DEAFULT" "$msg" > /tmp/"$user"/pipe
+		printf "%b%b%b: %s\n" "$COLORSET" "$name" "$DEAFULT" "$msg" > .log
 	fi
 
 done
